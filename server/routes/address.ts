@@ -1,11 +1,17 @@
 import express from "express";
 import { LocalStorage } from "node-localstorage";
-
+interface Address {
+  id: number;
+  postnumber: number;
+  name: string;
+  address: string;
+}
 const router = express.Router();
 const localStorage = new LocalStorage("./address");
 /**
  * 주소목록 json형태로 초기값 셋팅
  * localstroage를 이용한 데이터 CRUD 구현
+ * 서버 구동시 초기값으로 초기화됨
  */
 const ADDRESS_DB = require("./../address.json");
 localStorage.setItem("address", JSON.stringify(ADDRESS_DB));
@@ -23,11 +29,12 @@ router.get("/address/:count/:currentpage", (req: express.Request, res: express.R
   const DB = JSON.parse(localStorage.getItem("address") || "");
   const first = (Number(currentpage) - 1) * Number(count);
   const end = first + Number(count);
-  return res.json({
-    address: DB.slice(first, end),
+  return res.status(200).json({
+    address: DB.addresses.slice(first, end),
     count,
     currentpage,
-    totalCount: DB?.length,
+    totalCount: DB.addresses?.length,
+    default: DB.default,
   });
 });
 
@@ -36,13 +43,13 @@ router.get("/address/:count/:currentpage", (req: express.Request, res: express.R
  */
 router.post("/address", (req: express.Request, res: express.Response) => {
   let DB = JSON.parse(localStorage.getItem("address") || "");
-  let newAddress: any = req.body.newAddress;
-  newAddress.id = DB[DB.length - 1].id + 1;
-  DB.push(newAddress);
+  let newAddress: Address = req.body.newAddress;
+  newAddress.id = DB.addresses[DB.addresses.length - 1].id + 1;
+  DB.addresses.push(newAddress);
   localStorage.setItem("address", JSON.stringify(DB));
-  return res.json({
+  return res.status(200).json({
     address: newAddress,
-    totalCount: DB?.length,
+    totalCount: DB.addresses?.length,
   });
 });
 
@@ -52,10 +59,20 @@ router.post("/address", (req: express.Request, res: express.Response) => {
 router.delete("/address/:id", (req: express.Request, res: express.Response) => {
   let DB = JSON.parse(localStorage.getItem("address") || "");
   const { id } = req.params;
-  DB = DB.filter((address: any) => address.id !== Number(id));
+  DB = DB.filter((address: Address) => address.id !== Number(id));
+  localStorage.setItem("address", JSON.stringify(DB));
+  return res.status(204).json(true);
+});
+
+/**
+ * Address 기본주소 설정
+ */
+router.put("/address/default", (req: express.Request, res: express.Response) => {
+  let DB = JSON.parse(localStorage.getItem("address") || "");
+  DB.default = req.body.id;
   console.log(DB);
   localStorage.setItem("address", JSON.stringify(DB));
-  return res.send(true);
+  return res.status(204).json(true);
 });
 
 module.exports = router;

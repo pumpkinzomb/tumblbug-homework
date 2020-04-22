@@ -9,8 +9,8 @@ import { createStore, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 import reducers from "./modules";
 import "reset-css";
-const store = createStore(reducers, applyMiddleware(thunk));
 
+const store = createStore(reducers, applyMiddleware(thunk));
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>

@@ -1,0 +1,80 @@
+.App {
+  max-width: 780px;
+  width: 100%;
+  margin: auto;
+  font-family: "AppleSDGothicNeo-Bold", sans-serif;
+
+  h1 {
+    padding: 26px 42px 0 42px;
+    font-size: 36px;
+    line-height: 43px;
+    font-weight: bold;
+
+    @media (max-width: 420px) {
+      font-size: 28px;
+      padding: 26px 20px 0 20px;
+    }
+  }
+
+  .setting-nav {
+    margin-top: 60px;
+    padding: 0 42px 11px 42px;
+    border-bottom: 1px solid #cecece;
+    box-sizing: border-box;
+
+    @media (max-width: 420px) {
+      padding: 0 20px 11px 20px;
+      margin-top: 30px;
+
+    }
+
+    ul {
+      display: flex;
+
+      @media (max-width: 420px) {
+        justify-content: space-between;
+      }
+
+      li {
+        color: #999999;
+        font-size: 20px;
+        line-height: 24px;
+        position: relative;
+
+        @media (max-width: 420px) {
+          font-size: 1rem;
+        }
+
+        &+li {
+          margin-left: 35px;
+
+          @media (max-width: 420px) {
+            margin-left: 0;
+          }
+        }
+      }
+
+      a {
+        text-decoration: none;
+        color: unset;
+
+        &:hover,
+        &.on {
+          font-weight: bold;
+          color: #3e3e3e;
+
+          &::after {
+            content: "";
+            display: block;
+            width: 130%;
+            height: 4px;
+            position: absolute;
+            bottom: -11px;
+            left: -15%;
+            background: #3e3e3e;
+          }
+        }
+      }
+    }
+  }
+}
