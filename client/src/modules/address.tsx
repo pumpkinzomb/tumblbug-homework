@@ -5,12 +5,12 @@ interface Address {
   id: number;
   postnumber: number;
   name: string;
-  address: string;
+  addresses: string;
 }
 type AddressAction = ReturnType<typeof getAddress> | ReturnType<typeof addAddress> | ReturnType<typeof delAddress>;
 type AddressState = {
-  default: string;
-  address: Address[];
+  defaultAddress: number;
+  addresses: Address[];
   totalCount: number;
   currentPage: number;
 };
@@ -25,26 +25,29 @@ const DEL_ADDRESS = "address/DEL_ADDRESS" as const;
 /**
  * Action
  */
-export const getAddressRequest = (count: number, page: number) => {
+export const getAddressRequest = (count: number, currentPage: number) => {
   return (dispatch: any) => {
     // API REQUEST
     return axios
-      .post(`/api/address`, { count, page })
+      .get(`/api/address/${count}/${currentPage}`)
       .then((response) => {
-        const { totalCount, address, currentPage } = response.data;
-        dispatch(getAddress(address, totalCount, currentPage));
+        const { totalCount, addresses, currentPage } = response.data;
+        const defaultAddress = response.data.default;
+        console.log(response.data);
+        dispatch(getAddress(addresses, totalCount, currentPage, defaultAddress));
       })
       .catch((error) => {
-        throw error.response.data.code;
+        throw error.response.data;
       });
   };
 };
-export const getAddress = (address: Address[], totalCount: number, currentPage: number) => {
+export const getAddress = (addresses: Address[], totalCount: number, currentPage: number, defaultAddress: number) => {
   return {
     type: GET_ADDRESS,
-    address,
+    addresses,
     totalCount,
     currentPage,
+    defaultAddress,
   };
 };
 export const addAddressRequest = (address: Address) => {
@@ -57,7 +60,7 @@ export const addAddressRequest = (address: Address) => {
         dispatch(addAddress(totalCount, address, currentPage));
       })
       .catch((error) => {
-        throw error.response.data.code;
+        throw error.response.data;
       });
   };
 };
@@ -76,7 +79,7 @@ export const delAddressRequest = (addressId: number) => {
         dispatch(delAddress(addressId));
       })
       .catch((error) => {
-        throw error.response.data.code;
+        throw error.response.data;
       });
   };
 };
@@ -87,27 +90,36 @@ export const delAddress = (addressId: number) => ({ type: DEL_ADDRESS, addressId
  */
 
 const initialState = {
-  default: "",
-  address: [],
+  defaultAddress: -1,
+  addresses: [],
   totalCount: 0,
   currentPage: 0,
 };
 function address(state: AddressState = initialState, action: AddressAction) {
   switch (action.type) {
     case GET_ADDRESS:
+      let sortAddresses = update(state.addresses, {
+        $set: state.addresses.concat(action.addresses),
+      });
+      const findDefault = sortAddresses.findIndex((address) => address.id === action.defaultAddress);
+      if (findDefault > 0) {
+        let firstOne = sortAddresses.splice(findDefault, 1)[0];
+        sortAddresses = [firstOne, ...sortAddresses];
+      }
       return update(state, {
-        address: { $set: state.address.concat(action.address) },
+        defaultAddress: { $set: action.defaultAddress },
+        addresses: { $set: sortAddresses },
         totalCount: { $set: action.totalCount },
       });
     case ADD_ADDRESS:
       return update(state, {
-        address: { $set: action.address, ...state.address },
+        addresses: { $set: action.address, ...state.addresses },
         totalCount: { $set: action.totalCount },
       });
     case DEL_ADDRESS:
-      let index = state.address.findIndex((item) => item.id === action.addressId);
+      let index = state.addresses.findIndex((item) => item.id === action.addressId);
       return update(state, {
-        address: { $splice: [[index, 1]] },
+        addresses: { $splice: [[index, 1]] },
       });
     default:
       return state;

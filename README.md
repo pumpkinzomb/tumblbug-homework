@@ -3,6 +3,12 @@
 1. 모든 dependency install
 
 ```
+// tumblbug root directory
+// server dependency 설치
+yarn install
+
+// tumblbug client directory
+// CRA dependency 설치
 yarn install
 ```
 

@@ -30,9 +30,9 @@ router.get("/address/:count/:currentpage", (req: express.Request, res: express.R
   const first = (Number(currentpage) - 1) * Number(count);
   const end = first + Number(count);
   return res.status(200).json({
-    address: DB.addresses.slice(first, end),
+    addresses: DB.addresses.slice(first, end),
     count,
-    currentpage,
+    currentPage: currentpage,
     totalCount: DB.addresses?.length,
     default: DB.default,
   });
@@ -48,7 +48,7 @@ router.post("/address", (req: express.Request, res: express.Response) => {
   DB.addresses.push(newAddress);
   localStorage.setItem("address", JSON.stringify(DB));
   return res.status(200).json({
-    address: newAddress,
+    addresses: newAddress,
     totalCount: DB.addresses?.length,
   });
 });
@@ -59,7 +59,7 @@ router.post("/address", (req: express.Request, res: express.Response) => {
 router.delete("/address/:id", (req: express.Request, res: express.Response) => {
   let DB = JSON.parse(localStorage.getItem("address") || "");
   const { id } = req.params;
-  DB = DB.filter((address: Address) => address.id !== Number(id));
+  DB.addresses = DB.addresses.filter((address: Address) => address.id !== Number(id));
   localStorage.setItem("address", JSON.stringify(DB));
   return res.status(204).json(true);
 });

@@ -1,7 +1,4 @@
 .App {
-  max-width: 780px;
-  width: 100%;
-  margin: auto;
   font-family: "AppleSDGothicNeo-Bold", sans-serif;
 
   h1 {
@@ -9,6 +6,8 @@
     font-size: 36px;
     line-height: 43px;
     font-weight: bold;
+    max-width: 940px;
+    margin: auto;
 
     @media (max-width: 420px) {
       font-size: 28px;
@@ -25,11 +24,12 @@
     @media (max-width: 420px) {
       padding: 0 20px 11px 20px;
       margin-top: 30px;
-
     }
 
     ul {
       display: flex;
+      max-width: 940px;
+      margin: auto;
 
       @media (max-width: 420px) {
         justify-content: space-between;
@@ -45,9 +45,8 @@
           font-size: 1rem;
         }
 
-        &+li {
+        & + li {
           margin-left: 35px;
-
           @media (max-width: 420px) {
             margin-left: 0;
           }
