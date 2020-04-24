@@ -7,7 +7,11 @@ interface Address {
   name: string;
   addresses: string;
 }
-type AddressAction = ReturnType<typeof getAddress> | ReturnType<typeof addAddress> | ReturnType<typeof delAddress>;
+type AddressAction =
+  | ReturnType<typeof getAddress>
+  | ReturnType<typeof addAddress>
+  | ReturnType<typeof delAddress>
+  | ReturnType<typeof setDefaultAddress>;
 type AddressState = {
   defaultAddress: number;
   addresses: Address[];
@@ -21,6 +25,7 @@ type AddressState = {
 const GET_ADDRESS = "address/GET_ADDRESS" as const;
 const ADD_ADDRESS = "address/ADD_ADDRESS" as const;
 const DEL_ADDRESS = "address/DEL_ADDRESS" as const;
+const SET_DEFAULT_ADDRESS = "address/SET_DEFAULT_ADDRESS" as const;
 
 /**
  * Action
@@ -33,7 +38,7 @@ export const getAddressRequest = (count: number, currentPage: number) => {
       .then((response) => {
         const { totalCount, addresses, currentPage } = response.data;
         const defaultAddress = response.data.default;
-        console.log(response.data);
+        // console.log(response.data);
         dispatch(getAddress(addresses, totalCount, currentPage, defaultAddress));
       })
       .catch((error) => {
@@ -84,28 +89,55 @@ export const delAddressRequest = (addressId: number) => {
   };
 };
 export const delAddress = (addressId: number) => ({ type: DEL_ADDRESS, addressId });
+export const setDefaultAddressRequest = (addressId: number) => {
+  return (dispatch: any) => {
+    // API REQUEST
+    return axios
+      .put(`/api/address/default`, { id: addressId })
+      .then((response) => {
+        dispatch(setDefaultAddress(addressId));
+      })
+      .catch((error) => {
+        throw error.response.data;
+      });
+  };
+};
+export const setDefaultAddress = (addressId: number) => ({
+  type: SET_DEFAULT_ADDRESS,
+  addressId,
+});
 
 /**
  * Reducer
  */
-
 const initialState = {
   defaultAddress: -1,
   addresses: [],
   totalCount: 0,
   currentPage: 0,
 };
+/**
+ * default 주소를 맨 앞으로 옮기게 해주는 함수
+ */
+function setDefaultToFirst(defaultId: number, addresses: Address[]) {
+  const findDefault = addresses.findIndex((address) => address.id === defaultId);
+  // console.log(defaultId, findDefault);
+  if (findDefault > 0) {
+    let firstOne = addresses.splice(findDefault, 1)[0];
+    addresses = [firstOne, ...addresses];
+    return addresses;
+  } else {
+    return addresses;
+  }
+}
 function address(state: AddressState = initialState, action: AddressAction) {
+  let sortAddresses;
   switch (action.type) {
     case GET_ADDRESS:
-      let sortAddresses = update(state.addresses, {
+      sortAddresses = update(state.addresses, {
         $set: state.addresses.concat(action.addresses),
       });
-      const findDefault = sortAddresses.findIndex((address) => address.id === action.defaultAddress);
-      if (findDefault > 0) {
-        let firstOne = sortAddresses.splice(findDefault, 1)[0];
-        sortAddresses = [firstOne, ...sortAddresses];
-      }
+      sortAddresses = setDefaultToFirst(action.defaultAddress, sortAddresses);
       return update(state, {
         defaultAddress: { $set: action.defaultAddress },
         addresses: { $set: sortAddresses },
@@ -120,6 +152,15 @@ function address(state: AddressState = initialState, action: AddressAction) {
       let index = state.addresses.findIndex((item) => item.id === action.addressId);
       return update(state, {
         addresses: { $splice: [[index, 1]] },
+      });
+    case SET_DEFAULT_ADDRESS:
+      sortAddresses = update(state.addresses, {
+        $set: state.addresses,
+      });
+      sortAddresses = setDefaultToFirst(action.addressId, sortAddresses);
+      return update(state, {
+        defaultAddress: { $set: action.addressId },
+        addresses: { $set: sortAddresses },
       });
     default:
       return state;
