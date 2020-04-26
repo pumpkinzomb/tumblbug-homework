@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "./../modules";
 import { getAddressRequest, addAddressRequest, delAddressRequest, setDefaultAddressRequest } from "../modules/address";
+import { CSSTransition } from "react-transition-group";
 import "./../styles/Address.scss";
+import "./../styles/animation.scss";
+import Confirm from "./Confirm";
+import Toast from "./Toast";
 
 interface Address {
   id: number;
@@ -18,12 +21,53 @@ const Address = () => {
    * count 값은 5개로 고정시킴
    */
   const count = 5;
-  const [currentPage, setCurrent] = useState(0);
+  const [currentPage, setCurrent] = useState(1);
   const [openControlMenu, setControlMenu] = useState(-1);
   const [openAddAddress, setAddAddress] = useState(false);
+  const [confirmMessage, setConfirm] = useState({ id: -1, message: "" });
+  const [toastMessage, setToast] = useState({ show: false, message: "" });
+  /** 라이프사이클 관련 */
+  useEffect(() => {
+    function getAddressList() {
+      dispatch(getAddressRequest(count, currentPage));
+    }
+    getAddressList();
+  }, [dispatch, currentPage]);
   /**
-   * address의 삭제, 기본주소 설정 관련 메소드
+   * address의 추가, 삭제, 기본주소 설정 관련 메소드
    */
+  function handleAddAddressSubmit() {
+    const name = nameRef.current;
+    const postnumber = postnumberRef.current;
+    const address = addressRef.current;
+    const setDefault = setdefaultRef.current;
+    if (!name?.value || !postnumber?.value || !address?.value) {
+      let check;
+      if (!name?.value) {
+        check = name;
+        name?.parentElement?.classList.add("error");
+      }
+      if (!postnumber?.value) {
+        check = !check ? postnumber : check;
+        postnumber?.parentElement?.classList.add("error");
+      }
+      if (!address?.value) {
+        check = !check ? address : check;
+        address?.parentElement?.classList.add("error");
+      }
+      check?.focus();
+      return;
+    }
+
+    const newAddress = {
+      id: -1,
+      postnumber: Number(postnumber?.value),
+      name: String(name?.value),
+      address: String(address?.value),
+    };
+    dispatch(addAddressRequest(newAddress, Boolean(setDefault?.checked)));
+    closeNewAddress();
+  }
   function handleToggleControl(id: number) {
     if (openControlMenu !== id) {
       setControlMenu(id);
@@ -37,9 +81,32 @@ const Address = () => {
   function handleSetDefault(id: number) {
     dispatch(setDefaultAddressRequest(id));
     closeControlMenu();
+    handleToast(true, "기본 배송지가 변경되었습니다.");
+    setTimeout(() => {
+      handleToast(false, "기본 배송지가 변경되었습니다.");
+    }, 1500);
   }
   function handleDeleteAddress(id: number) {
+    setConfirm({ id, message: "삭제하시겠습니까?" });
+    closeControlMenu();
+    document.body.style.overflow = "hidden";
+  }
+  /**
+   * 주소목록 더 불러오기 관련 메소드
+   */
+  function handleMoreAddress() {
+    setCurrent(currentPage + 1);
+  }
+  /**
+   * 컨펌 메세지 메소드
+   */
+  function confirmAccept(id: number) {
     dispatch(delAddressRequest(id));
+    confirmCancel();
+  }
+  function confirmCancel() {
+    setConfirm({ id: -1, message: "" });
+    document.body.style.overflow = "auto";
   }
   /**
    * new address의 팝업창 관련 메소드
@@ -52,13 +119,17 @@ const Address = () => {
     setAddAddress(false);
     document.body.style.overflow = "auto";
   }
+
   /**
-   * 주소목록 더 불러오기 관련 메소드
+   * 토스트 메세지
    */
-  function handleMoreAddress() {
-    setCurrent(currentPage + 1);
-    dispatch(getAddressRequest(count, currentPage + 1));
+  function handleToast(show: boolean, message: string) {
+    setToast({
+      show,
+      message,
+    });
   }
+
   /** 컨트롤 메뉴 함수컴포넌트 */
   const controlMenu = (addressId: number) => {
     return (
@@ -106,33 +177,62 @@ const Address = () => {
     });
   };
   /** 새로운 주소등록 함수컴포넌트 */
+  const nameRef = useRef<HTMLInputElement>(null);
+  const postnumberRef = useRef<HTMLInputElement>(null);
+  const addressRef = useRef<HTMLInputElement>(null);
+  const setdefaultRef = useRef<HTMLInputElement>(null);
   const addAddressSection = () => {
     return (
       <section className="add-new-address">
         <div className="bg-dim" onClick={closeNewAddress}></div>
         <div className="form-wrapper">
           <h1>배송지 추가</h1>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
+          <form onSubmit={handleAddAddressSubmit}>
             <div className="form-field-1">
-              <input type="text" placeholder="받는 사람"></input>
-              <input type="text" placeholder="우편번호"></input>
+              <div>
+                <input
+                  type="text"
+                  placeholder="받는 사람"
+                  ref={nameRef}
+                  onChange={() => nameRef.current?.parentElement?.classList.remove("error")}
+                ></input>
+                <span>받는 분 이름을 입력해주세요.</span>
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="우편번호"
+                  ref={postnumberRef}
+                  onChange={(event) => {
+                    console.log(event.target.value);
+                    event.target.value = event.target.value.replace(/[^0-9]/, "");
+                    postnumberRef.current?.parentElement?.classList.remove("error");
+                  }}
+                ></input>
+                <span>우편번호를 입력해주세요.</span>
+              </div>
             </div>
             <div className="form-field-2">
-              <input type="text" placeholder="주소"></input>
+              <input
+                type="text"
+                placeholder="주소"
+                ref={addressRef}
+                onChange={() => addressRef.current?.parentElement?.classList.remove("error")}
+                maxLength={25}
+              ></input>
+              <span>주소를 입력해 주세요.</span>
             </div>
             <div className="form-field-3">
-              <input type="checkbox" id="default_checkBox" />
+              <input type="checkbox" id="default_checkBox" ref={setdefaultRef} />
               <label htmlFor="default_checkBox">
                 <span className="material-icons">check</span>
                 기본 배송지로 등록
               </label>
             </div>
             <div className="submit-btn">
-              <button type="button">등록 완료</button>
+              <button type="button" onClick={handleAddAddressSubmit}>
+                등록 완료
+              </button>
             </div>
           </form>
           <div className="add-new-close-btn">
@@ -144,11 +244,6 @@ const Address = () => {
       </section>
     );
   };
-  /** 라이프사이클 관련 */
-  useEffect(() => {
-    setCurrent(currentPage + 1);
-    dispatch(getAddressRequest(count, currentPage + 1));
-  }, []);
   const addresses: Address[] = storeAddress.addresses;
   const addressesLength: number = storeAddress.totalCount;
   const defaultAddress: number = storeAddress.defaultAddress;
@@ -189,11 +284,15 @@ const Address = () => {
           <p>배송지를 삭제하면 예약된 후원의 배송지 정보도 삭제되나요?</p>
           <p>
             현재 후원하신 프로젝트에 등록된 배송지가 삭제되거나 변경되지 않습니다. 이를 변경하시려면 후원현황에서
-            변경해주세요. <a href="#">내 후원현황 바로가기</a>
+            변경해주세요. <button type="button">내 후원현황 바로가기</button>
           </p>
         </div>
       </div>
       {openAddAddress ? addAddressSection() : ""}
+      {confirmMessage.message ? Confirm(confirmMessage, confirmAccept, confirmCancel) : ""}
+      <CSSTransition in={toastMessage.show} timeout={1500} classNames="toast" unmountOnExit>
+        {Toast(toastMessage.message)}
+      </CSSTransition>
     </section>
   );
 };

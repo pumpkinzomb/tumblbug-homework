@@ -1,6 +1,7 @@
 import React from "react";
-function Toast() {
-  return <div className="Toast"></div>;
+import "./../styles/Toast.scss";
+function Toast(message: string) {
+  return <div className="Toast">{message}</div>;
 }
 
 export default Toast;

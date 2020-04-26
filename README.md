@@ -5,11 +5,12 @@
 ```
 // tumblbug root directory
 // server dependency 설치
-yarn install
+1. yarn install
 
 // tumblbug client directory
 // CRA dependency 설치
-yarn install
+2. cd client
+   yarn install
 ```
 
 2. dev 환경 구축
@@ -36,7 +37,7 @@ yarn client
 - 주소 추가
 
   - /api/address (POST)
-    - data 값으로 정의된 형식의 address객체 값을 요구 (id, postnumber, name, address)
+    - data 값으로 정의된 형식의 address객체 값(id, postnumber, name, address)과 setDefault값을 요구
     - 성공 200 : json 객체반환 (변경된 address, totalCount)
 
 - 주소 삭제

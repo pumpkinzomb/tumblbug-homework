@@ -1,0 +1,20 @@
+.Toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  padding: 18px 0;
+  text-align: center;
+  color: #ffffff;
+  border-radius: 6px;
+  background-color: rgba(107, 107, 107, 0.7);
+  font-size: 22px;
+  font-weight: bold;
+  box-sizing: border-box;
+  @media (max-width: 420px) {
+    padding: 18px 10px;
+    font-size: 16px;
+    width: 90%;
+  }
+}

@@ -12,15 +12,13 @@ import "reset-css";
 const store = createStore(reducers, applyMiddleware(thunk));
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <Switch>
-          <Route path="/" component={App} />
-        </Switch>
-      </BrowserRouter>
-    </Provider>
-  </React.StrictMode>,
+  <Provider store={store}>
+    <BrowserRouter>
+      <Switch>
+        <Route path="/" component={App} />
+      </Switch>
+    </BrowserRouter>
+  </Provider>,
   document.getElementById("root")
 );
 

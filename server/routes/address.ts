@@ -44,12 +44,18 @@ router.get("/address/:count/:currentpage", (req: express.Request, res: express.R
 router.post("/address", (req: express.Request, res: express.Response) => {
   let DB = JSON.parse(localStorage.getItem("address") || "");
   let newAddress: Address = req.body.newAddress;
-  newAddress.id = DB.addresses[DB.addresses.length - 1].id + 1;
+  let setDefault: boolean = req.body.setDefault;
+  const newId = DB.addresses[DB.addresses.length - 1].id + 1;
+  newAddress.id = newId;
   DB.addresses.push(newAddress);
+  if (setDefault) {
+    DB.default = newId;
+  }
   localStorage.setItem("address", JSON.stringify(DB));
   return res.status(200).json({
     addresses: newAddress,
     totalCount: DB.addresses?.length,
+    defaultAddress: DB.default,
   });
 });
 
@@ -70,7 +76,7 @@ router.delete("/address/:id", (req: express.Request, res: express.Response) => {
 router.put("/address/default", (req: express.Request, res: express.Response) => {
   let DB = JSON.parse(localStorage.getItem("address") || "");
   DB.default = req.body.id;
-  console.log(DB);
+  // console.log(DB);
   localStorage.setItem("address", JSON.stringify(DB));
   return res.status(204).json(true);
 });
